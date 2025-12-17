@@ -1,8 +1,10 @@
 import { Canvas, Circle, Path, Skia } from "@shopify/react-native-skia";
 import { useEffect, useState } from "react";
 import { View } from "react-native";
-import { GAME_HEIGHT, GAME_WIDTH, TILE_SIZE } from "../game/data/constants";
+import { GAME_HEIGHT, GAME_WIDTH, TILE_SIZE, TOWERS } from "../game/data/constants";
 import { MAIN_PATH } from "../game/data/path";
+import Tower from "../game/entities/Tower";
+import { gridCenterToPixel } from "../game/utils/grid";
 import { pathToPixels } from "../game/utils/path";
 
 export default function GameCanvas() {
@@ -54,6 +56,25 @@ export default function GameCanvas() {
     return () => cancelAnimationFrame(animationFrame);
   }, [enemyPos, pathPoints]);
 
+  // --- Towers ---
+
+  const towerEntities = TOWERS.map((t) => {
+  const { x, y } = gridCenterToPixel({ col: t.col, row: t.row });
+  return new Tower(t.id, x, y);
+});
+
+  function Towers({ towers }) {
+  return towerEntities.map((tower) => (
+    <Circle
+      key={tower.id}
+      cx={tower.x}
+      cy={tower.y}
+      r={15} // radius
+      color={tower.gem ? tower.gem.colors : "gray"} // gray if no gem, blue if gem assigned
+    />
+  ));
+}
+
   // --- Render ---
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -91,6 +112,8 @@ export default function GameCanvas() {
 
         {/* ENEMY */}
         <Circle cx={enemyPos.x} cy={enemyPos.y} r={10} color="crimson" />
+        {/* TOWERS */}
+        <Towers towers={TOWERS} />
       </Canvas>
     </View>
   );

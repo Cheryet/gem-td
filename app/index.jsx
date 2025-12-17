@@ -1,10 +1,10 @@
-import { View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import GameScreen from '../src/screens/GameScreen';
 
 export default function Index() {
   return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+    <SafeAreaProvider>
       <GameScreen />
-    </View>
+    </SafeAreaProvider>
   );
 }
