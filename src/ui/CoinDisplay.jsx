@@ -1,10 +1,18 @@
-import { Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
-export default function CoinDisplay({ coins = 0, wave = 0 }) {
+export default function CoinDisplay({ coins }) {
   return (
-    <View style={{flexDirection: "row", alignItems: "center", justifyContent: "space-around"}}>
-      <Text style={{ color: "#fff" }}>Coins: {coins}</Text>
-      <Text style={{ color: "#fff" }}>Wave: {wave}</Text>
+    <View style={styles.container}>
+      <Text style={styles.text}>🪙 {coins}</Text>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: "#000a",
+    padding: 6,
+    borderRadius: 6,
+  },
+  text: { color: "#fff", fontWeight: "bold" },
+});

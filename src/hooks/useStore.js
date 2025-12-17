@@ -1,21 +1,21 @@
 import { useState } from "react";
 
-export function useStore(initialCoins = 0) {
-  const [coins, setCoins] = useState(initialCoins);
+export default function useEconomy() {
+  const [coins, setCoins] = useState(100); // start with test coins
 
-  function addCoins(amount) {
+  const earnCoins = (amount) => {
     setCoins((prev) => prev + amount);
-  }
+  };
 
-  function spendCoins(amount) {
-    if (amount > coins) return false;
+  const spendCoins = (amount) => {
+    if (coins < amount) return false;
     setCoins((prev) => prev - amount);
     return true;
-  }
+  };
 
   return {
     coins,
-    addCoins,
+    earnCoins,
     spendCoins,
   };
 }

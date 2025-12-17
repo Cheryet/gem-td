@@ -1,13 +1,13 @@
 import { Canvas, Circle, Path, Skia } from "@shopify/react-native-skia";
 import { useEffect, useState } from "react";
-import { View } from "react-native";
-import { GAME_HEIGHT, GAME_WIDTH, TILE_SIZE, TOWERS } from "../game/data/constants";
+import { Pressable, StyleSheet, View } from "react-native";
+import { GAME_HEIGHT, GAME_WIDTH, TILE_SIZE } from "../game/data/constants";
 import { MAIN_PATH } from "../game/data/path";
-import Tower from "../game/entities/Tower";
-import { gridCenterToPixel } from "../game/utils/grid";
 import { pathToPixels } from "../game/utils/path";
 
-export default function GameCanvas() {
+const TOWER_RADIUS = 15;
+
+export default function GameCanvas({ towers, onTowerPress }) {
   const pathPoints = pathToPixels(MAIN_PATH);
 
   // --- Enemy state ---
@@ -15,17 +15,17 @@ export default function GameCanvas() {
     x: pathPoints[0]?.x || 0,
     y: pathPoints[0]?.y || 0,
     pathIndex: 0,
+    health: 10,
   });
 
   const ENEMY_SPEED = 80;
 
-  // --- Game loop ---
+  // --- Game loop for enemy movement ---
   useEffect(() => {
     let animationFrame;
 
     const tick = () => {
       const { x, y, pathIndex } = enemyPos;
-
       if (!pathPoints[pathIndex + 1]) return;
 
       const target = pathPoints[pathIndex + 1];
@@ -48,7 +48,6 @@ export default function GameCanvas() {
       }
 
       setEnemyPos({ x: newX, y: newY, pathIndex: newIndex });
-
       animationFrame = requestAnimationFrame(tick);
     };
 
@@ -56,65 +55,88 @@ export default function GameCanvas() {
     return () => cancelAnimationFrame(animationFrame);
   }, [enemyPos, pathPoints]);
 
-  // --- Towers ---
-
-  const towerEntities = TOWERS.map((t) => {
-  const { x, y } = gridCenterToPixel({ col: t.col, row: t.row });
-  return new Tower(t.id, x, y);
-});
-
-  function Towers({ towers }) {
-  return towerEntities.map((tower) => (
-    <Circle
-      key={tower.id}
-      cx={tower.x}
-      cy={tower.y}
-      r={15} // radius
-      color={tower.gem ? tower.gem.colors : "gray"} // gray if no gem, blue if gem assigned
-    />
-  ));
-}
-
   // --- Render ---
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <Canvas style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}>
-        {/* GRID */}
-        {(() => {
-          const gridPath = Skia.Path.Make();
-          for (let x = 0; x <= GAME_WIDTH; x += TILE_SIZE) {
-            gridPath.moveTo(x, 0);
-            gridPath.lineTo(x, GAME_HEIGHT);
-          }
-          for (let y = 0; y <= GAME_HEIGHT; y += TILE_SIZE) {
-            gridPath.moveTo(0, y);
-            gridPath.lineTo(GAME_WIDTH, y);
-          }
-          return <Path path={gridPath} color="red" style="stroke" strokeWidth={1} />;
-        })()}
+      <View style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}>
+        <Canvas style={styles.canvas}>
+          {/* GRID */}
+          {(() => {
+            const gridPath = Skia.Path.Make();
+            for (let x = 0; x <= GAME_WIDTH; x += TILE_SIZE) {
+              gridPath.moveTo(x, 0);
+              gridPath.lineTo(x, GAME_HEIGHT);
+            }
+            for (let y = 0; y <= GAME_HEIGHT; y += TILE_SIZE) {
+              gridPath.moveTo(0, y);
+              gridPath.lineTo(GAME_WIDTH, y);
+            }
+            return <Path path={gridPath} color="red" style="stroke" strokeWidth={1} />;
+          })()}
 
-        {/* PATH */}
-        {pathPoints.length > 0 && (() => {
-          const skiaPath = Skia.Path.Make();
-          skiaPath.moveTo(pathPoints[0].x, pathPoints[0].y);
-          pathPoints.slice(1).forEach(p => skiaPath.lineTo(p.x, p.y));
-          return (
-            <Path
-              path={skiaPath}
-              color="rgba(255,215,0,0.8)"
-              style="stroke"
-              strokeWidth={5}
-              strokeCap="round"
-              strokeJoin="round"
+          {/* PATH */}
+          {pathPoints.length > 0 && (() => {
+            const skiaPath = Skia.Path.Make();
+            skiaPath.moveTo(pathPoints[0].x, pathPoints[0].y);
+            pathPoints.slice(1).forEach((p) => skiaPath.lineTo(p.x, p.y));
+            return (
+              <Path
+                path={skiaPath}
+                color="rgba(255,215,0,0.8)"
+                style="stroke"
+                strokeWidth={5}
+                strokeCap="round"
+                strokeJoin="round"
+              />
+            );
+          })()}
+
+          {/* ENEMY */}
+          <Circle cx={enemyPos.x} cy={enemyPos.y} r={10} color="crimson" />
+
+          {/* TOWERS */}
+          {towers.map((tower) => (
+            <Circle
+              key={tower.id}
+              cx={tower.x}
+              cy={tower.y}
+              r={TOWER_RADIUS}
+              color={tower.gem ? tower.gem.colors[0] : "#777"}
             />
-          );
-        })()}
+          ))}
+        </Canvas>
 
-        {/* ENEMY */}
-        <Circle cx={enemyPos.x} cy={enemyPos.y} r={10} color="crimson" />
-        {/* TOWERS */}
-        <Towers towers={TOWERS} />
-      </Canvas>
+        {/* Invisible touch targets over each tower */}
+        {towers.map((tower) => (
+          <Pressable
+            key={`hitbox-${tower.id}`}
+            style={[
+              styles.towerHitBox,
+              {
+                left: tower.x - TOWER_RADIUS,
+                top: tower.y - TOWER_RADIUS,
+                width: TOWER_RADIUS * 2,
+                height: TOWER_RADIUS * 2,
+              },
+            ]}
+            hitSlop={10}
+            onPress={() => onTowerPress?.(tower.id)}
+          />
+        ))}
+      </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  canvas: {
+    width: GAME_WIDTH,
+    height: GAME_HEIGHT,
+    position: "absolute",
+    top: 0,
+    left: 0,
+  },
+  towerHitBox: {
+    position: "absolute",
+  },
+});

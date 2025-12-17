@@ -25,4 +25,8 @@ export default class Tower {
     if (!this.gem) return [];
     return this.gem.colors; // e.g., red = attack speed, blue = slow
   }
+
+  hasGem() {
+    return this.gem !== null;
+  }
 }

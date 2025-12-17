@@ -1,6 +1,6 @@
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-export default function InventoryPanel({ gems, onSelectGem }) {
+export default function InventoryPanel({ gems, selectedGem, onSelectGem }) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Inventory</Text>
@@ -10,7 +10,11 @@ export default function InventoryPanel({ gems, onSelectGem }) {
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <TouchableOpacity
-            style={[styles.gem, { backgroundColor: item.colors[0] || "gray" }]}
+            style={[
+              styles.gem,
+              { backgroundColor: item.colors[0] || "gray" },
+              selectedGem?.id === item.id && styles.selected,
+            ]}
             onPress={() => onSelectGem(item)}
           >
             <Text style={styles.gemText}>{item.shape}</Text>
@@ -34,4 +38,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   gemText: { color: "#fff", fontSize: 12, textAlign: "center" },
+  selected: {
+    borderWidth: 3,
+    borderColor: "#fff",
+  },
 });
